@@ -1,0 +1,63 @@
+# VRTテストアプリケーション
+
+このプロジェクトは、Playwrightを使用してウェブサイトの視覚的回帰テスト(VRT)を行うためのアプリケーションです。
+
+## プロジェクト構成
+
+```
+vrt-app/
+├── client/                 # フロントエンド (React)
+│   ├── public/
+│   ├── src/
+│   │   ├── App.js
+│   │   ├── components/
+│   │   └── ...
+│   ├── package.json
+│   └── ...
+├── server/                 # バックエンド (Node.js + Express + Playwright)
+│   ├── screenshots/        # スクリーンショット保存ディレクトリ
+│   ├── diffs/              # 差分画像保存ディレクトリ
+│   ├── index.js            # サーバーエントリーポイント
+│   ├── screenshot.js       # Playwright スクリーンショット機能
+│   ├── diff.js             # 差分検出機能
+│   └── package.json
+└── README.md
+```
+
+## 機能
+
+- URLを指定してウェブサイトのスクリーンショット取得
+- 2つのスクリーンショットの視覚的差分検出
+- 差分表示、横並び表示、スライダー表示の切り替え
+- 差分強調表示カスタマイズ
+
+## インストール方法
+
+1. リポジトリをクローン
+2. クライアントとサーバーの依存関係をインストール
+3. クライアントとサーバーを起動
+
+```bash
+# クライアント側の依存関係インストール
+cd client
+npm install
+
+# サーバー側の依存関係インストール
+cd ../server
+npm install
+npx playwright install chromium
+
+# サーバー起動
+npm start
+
+# 別ターミナルでクライアント起動
+cd ../client
+npm start
+```
+
+## 使用技術
+
+- フロントエンド: React, Tailwind CSS
+- バックエンド: Node.js, Express
+- スクリーンショット: Playwright
+- 差分検出: pixelmatch

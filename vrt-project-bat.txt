@@ -1,0 +1,26 @@
+@echo off
+echo VRTテストアプリケーションのセットアップを開始します...
+
+REM 必要なディレクトリを作成
+mkdir server\screenshots server\diffs server\uploads
+
+REM クライアント側の依存関係をインストール
+echo クライアント側の依存関係をインストールしています...
+cd client
+call npm install
+cd ..
+
+REM サーバー側の依存関係をインストール
+echo サーバー側の依存関係をインストールしています...
+cd server
+call npm install
+
+REM Playwrightブラウザをインストール
+echo Playwrightのブラウザをインストールしています...
+call npx playwright install chromium
+
+echo セットアップが完了しました！
+echo サーバーを起動するには: cd server ^&^& npm start
+echo クライアントを起動するには（別のコマンドプロンプトで）: cd client ^&^& npm start
+
+pause

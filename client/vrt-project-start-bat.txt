@@ -1,0 +1,15 @@
+@echo off
+echo VRTテストアプリケーションを起動しています...
+
+REM サーバー起動（新しいウィンドウで）
+echo サーバーを起動しています...
+start cmd /k "cd server && npm start"
+
+REM 少し待機
+echo 5秒待機しています...
+timeout /t 5 /nobreak > nul
+
+REM クライアント起動
+echo クライアントを起動しています...
+cd client
+npm start
