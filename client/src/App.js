@@ -134,23 +134,32 @@ function App() {
       case 'slider':
         return (
           <div className="relative border border-gray-300">
-            <div className="w-full relative overflow-hidden" style={{ height: '600px' }}>
-              <img src={screenshot1} alt="スクリーンショット1" className="absolute top-0 left-0 w-full h-full object-cover" />
-              <div 
-                className="absolute top-0 h-full overflow-hidden" 
-                style={{ width: `${sliderPosition}%`, left: 0 }}
-              >
+            <div className="w-full relative overflow-auto" style={{ maxHeight: '600px' }}>
+              <div className="slider-container relative">
                 <img 
-                  src={screenshot2} 
-                  alt="スクリーンショット2" 
-                  className="absolute top-0 left-0 w-full h-full object-cover" 
-                  style={{ width: `${100 / (sliderPosition/100)}%` }}
+                  src={screenshot1} 
+                  alt="スクリーンショット1" 
+                  className="w-full" 
+                  style={{ display: 'block' }} 
                 />
+                <div 
+                  className="absolute top-0 left-0 h-full overflow-hidden" 
+                  style={{ width: `${sliderPosition}%` }}
+                >
+                  <div className="h-full" style={{ width: `${100 / sliderPosition * 100}%`, position: 'relative' }}>
+                    <img 
+                      src={screenshot2} 
+                      alt="スクリーンショット2" 
+                      className="w-full" 
+                      style={{ display: 'block' }} 
+                    />
+                  </div>
+                </div>
+                <div 
+                  className="absolute top-0 bottom-0 w-1 bg-blue-500 cursor-ew-resize z-10"
+                  style={{ left: `${sliderPosition}%` }}
+                ></div>
               </div>
-              <div 
-                className="absolute top-0 bottom-0 w-1 bg-blue-500 cursor-ew-resize z-10"
-                style={{ left: `${sliderPosition}%` }}
-              ></div>
             </div>
             <input
               type="range"
@@ -160,6 +169,9 @@ function App() {
               onChange={(e) => setSliderPosition(Number(e.target.value))}
               className="w-full mt-2"
             />
+            <div className="text-center text-sm text-gray-500 mt-2">
+              左に動かすと左側の画像、右に動かすと右側の画像が多く表示されます
+            </div>
           </div>
         );
       default:
