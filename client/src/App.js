@@ -16,6 +16,30 @@ function App() {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [cleanupStatus, setCleanupStatus] = useState(null);
+  
+  // 画像ファイルをクリーンアップする関数
+  const cleanupImages = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post('/api/cleanup');
+      console.log('クリーンアップの結果:', response.data);
+      setCleanupStatus({
+        success: true,
+        message: response.data.message,
+        count: response.data.deleted
+      });
+    } catch (error) {
+      console.error('Cleanup error:', error);
+      setCleanupStatus({
+        success: false,
+        message: error.response?.data?.message || 'クリーンアップ中にエラーが発生しました'
+      });
+    } finally {
+      // 3秒後にステータスメッセージを消す
+      setTimeout(() => setCleanupStatus(null), 3000);
+    }
+  };
   
   // スクリーンショットを取得する関数
   const takeScreenshot = async (url, delay) => {
@@ -40,6 +64,10 @@ function App() {
   
   // 1回目のスクリーンショット取得
   const handleTakeScreenshot1 = async () => {
+    // まず画像をクリーンアップ
+    await cleanupImages();
+    
+    // スクリーンショット取得
     const result = await takeScreenshot(url, delay);
     if (result) {
       setScreenshot1(result.screenshotUrl);
@@ -247,6 +275,18 @@ function App() {
         
         {isLoading && <div className="mt-4 text-blue-500">処理中...</div>}
         {errorMessage && <div className="mt-4 text-red-500">{errorMessage}</div>}
+        {cleanupStatus && (
+          <div className={`mt-4 ${cleanupStatus.success ? 'text-green-500' : 'text-orange-500'}`}>
+            {cleanupStatus.message}
+            {cleanupStatus.count && (
+              <div className="text-sm">
+                削除ファイル数: スクリーンショット {cleanupStatus.count.screenshots}件、
+                差分画像 {cleanupStatus.count.diffs}件、
+                アップロード {cleanupStatus.count.uploads}件
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
       {/* スクリーンショット表示エリア */}

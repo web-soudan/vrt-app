@@ -13,6 +13,21 @@ const ensureDirExists = (dir) => {
   }
 };
 
+// ディレクトリ内の画像ファイルを削除する関数
+const cleanupDirectory = (dir) => {
+  if (fs.existsSync(dir)) {
+    const files = fs.readdirSync(dir);
+    files.forEach(file => {
+      // PNGファイルのみを削除
+      if (file.toLowerCase().endsWith('.png')) {
+        fs.unlinkSync(path.join(dir, file));
+      }
+    });
+    return files.length;
+  }
+  return 0;
+};
+
 // ディレクトリの初期化
 const screenshotsDir = path.join(__dirname, 'screenshots');
 const diffsDir = path.join(__dirname, 'diffs');
@@ -27,6 +42,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 画像クリーンアップエンドポイント
+app.post('/api/cleanup', (req, res) => {
+  try {
+    // 各ディレクトリの不要な画像を削除
+    const screenshotsCount = cleanupDirectory(screenshotsDir);
+    const diffsCount = cleanupDirectory(diffsDir);
+    const uploadsCount = cleanupDirectory(uploadsDir);
+    
+    console.log(`クリーンアップ完了: スクリーンショット ${screenshotsCount}件、差分 ${diffsCount}件、アップロード ${uploadsCount}件を削除しました`);
+    
+    res.json({
+      success: true,
+      message: `クリーンアップが完了しました。合計 ${screenshotsCount + diffsCount + uploadsCount} ファイルを削除しました。`,
+      deleted: {
+        screenshots: screenshotsCount,
+        diffs: diffsCount,
+        uploads: uploadsCount
+      }
+    });
+  } catch (error) {
+    console.error('Cleanup error:', error);
+    res.status(500).json({
+      success: false,
+      message: `クリーンアップ中にエラーが発生しました: ${error.message}`
+    });
+  }
+});
 
 // スクリーンショットの取得エンドポイント
 app.post('/api/screenshot', async (req, res) => {
