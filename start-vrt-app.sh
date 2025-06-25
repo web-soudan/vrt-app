@@ -30,12 +30,20 @@ echo $SERVER_PID > /tmp/vrt-server.pid
 echo "サーバーのプロセスID: $SERVER_PID"
 
 # サーバーが起動するまで少し待つ
-echo "サーバーの起動を待機しています（5秒）..."
-sleep 5
+echo "サーバーの起動を待機しています（10秒）..."
+sleep 10
+
+# サーバーの状態をチェック
+echo "サーバーの状態をチェックしています..."
+if curl -s http://localhost:5002/health > /dev/null 2>&1; then
+  echo "サーバーが正常に起動しました"
+else
+  echo "警告: サーバーのヘルスチェックに失敗しました"
+fi
 
 # クライアントを起動
 echo "クライアントを起動しています（ポート3000）..."
-cd "$CLIENT_DIR"
+cd "$CLIENT_DIR" || exit 1
 npm start
 
 # このスクリプトが終了した時にサーバーも停止するようにする
@@ -43,8 +51,8 @@ cleanup() {
   echo "アプリケーションを終了しています..."
   if [ -f /tmp/vrt-server.pid ]; then
     SERVER_PID=$(cat /tmp/vrt-server.pid)
-    if ps -p $SERVER_PID > /dev/null; then
-      kill $SERVER_PID 2>/dev/null
+    if ps -p "$SERVER_PID" > /dev/null; then
+      kill "$SERVER_PID" 2>/dev/null
     fi
     rm /tmp/vrt-server.pid
   fi

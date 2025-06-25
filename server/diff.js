@@ -19,16 +19,20 @@ async function generateDiff(img1Path, img2Path, diffOutputPath, threshold = 0.1)
   const width = Math.max(img1.width, img2.width);
   const height = Math.max(img1.height, img2.height);
   
-  // 1つ目の画像をリサイズ
+  // 1つ目の画像を配置（元の縦横比を保持）
   const canvas1 = createCanvas(width, height);
   const ctx1 = canvas1.getContext('2d');
-  ctx1.drawImage(img1, 0, 0, img1.width, img1.height, 0, 0, width, height);
+  ctx1.fillStyle = '#ffffff'; // 白背景で埋める
+  ctx1.fillRect(0, 0, width, height);
+  ctx1.drawImage(img1, 0, 0, img1.width, img1.height);
   const img1Data = ctx1.getImageData(0, 0, width, height);
   
-  // 2つ目の画像をリサイズ
+  // 2つ目の画像を配置（元の縦横比を保持）
   const canvas2 = createCanvas(width, height);
   const ctx2 = canvas2.getContext('2d');
-  ctx2.drawImage(img2, 0, 0, img2.width, img2.height, 0, 0, width, height);
+  ctx2.fillStyle = '#ffffff'; // 白背景で埋める
+  ctx2.fillRect(0, 0, width, height);
+  ctx2.drawImage(img2, 0, 0, img2.width, img2.height);
   const img2Data = ctx2.getImageData(0, 0, width, height);
   
   // 差分画像用のキャンバス

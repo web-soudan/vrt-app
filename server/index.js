@@ -29,19 +29,33 @@ const cleanupDirectory = (dir) => {
 };
 
 // ディレクトリの初期化
-const screenshotsDir = path.join(__dirname, 'screenshots');
-const diffsDir = path.join(__dirname, 'diffs');
-const uploadsDir = path.join(__dirname, 'uploads');
+const isElectron = process.env.ELECTRON_APP === 'true' || process.versions.electron;
+const baseDir = isElectron && process.resourcesPath ? 
+  path.join(process.resourcesPath, 'server') : 
+  __dirname;
+
+const screenshotsDir = path.join(baseDir, 'screenshots');
+const diffsDir = path.join(baseDir, 'diffs');
+const uploadsDir = path.join(baseDir, 'uploads');
 
 ensureDirExists(screenshotsDir);
 ensureDirExists(diffsDir);
 ensureDirExists(uploadsDir);
 
+console.log('Server environment:', { 
+  isElectron, 
+  baseDir, 
+  screenshotsDir, 
+  diffsDir, 
+  uploadsDir,
+  resourcesPath: process.resourcesPath 
+});
+
 // アプリケーションの設定
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // 画像クリーンアップエンドポイント
 app.post('/api/cleanup', (req, res) => {
@@ -85,11 +99,22 @@ app.post('/api/screenshot', async (req, res) => {
     const screenshotPath = path.join(screenshotsDir, filename);
     
     // スクリーンショットを撮影
+    console.log('Taking screenshot:', { url, screenshotPath, delay });
     await takeScreenshot(url, screenshotPath, delay);
+    
+    console.log('Screenshot saved:', { 
+      screenshotPath, 
+      exists: fs.existsSync(screenshotPath) 
+    });
     
     // 静的ファイルとして提供するためにuploadsディレクトリにコピー
     const publicPath = path.join(uploadsDir, filename);
     fs.copyFileSync(screenshotPath, publicPath);
+    
+    console.log('Screenshot copied to uploads:', { 
+      publicPath, 
+      exists: fs.existsSync(publicPath) 
+    });
     
     res.json({
       success: true,
@@ -110,6 +135,9 @@ app.post('/api/diff', async (req, res) => {
   try {
     const { img1, img2, threshold = 0.1 } = req.body;
     
+    console.log('Diff request:', { img1, img2, threshold });
+    console.log('Screenshots directory:', screenshotsDir);
+    
     if (!img1 || !img2) {
       return res.status(400).json({ message: '2つの画像が必要です' });
     }
@@ -117,9 +145,32 @@ app.post('/api/diff', async (req, res) => {
     const img1Path = path.join(screenshotsDir, img1);
     const img2Path = path.join(screenshotsDir, img2);
     
+    console.log('Image paths:', { img1Path, img2Path });
+    console.log('Files exist:', { 
+      img1Exists: fs.existsSync(img1Path), 
+      img2Exists: fs.existsSync(img2Path) 
+    });
+    
+    // スクリーンショットディレクトリの内容を確認
+    if (fs.existsSync(screenshotsDir)) {
+      const files = fs.readdirSync(screenshotsDir);
+      console.log('Files in screenshots directory:', files);
+    } else {
+      console.log('Screenshots directory does not exist:', screenshotsDir);
+    }
+    
     // 画像ファイルの存在確認
     if (!fs.existsSync(img1Path) || !fs.existsSync(img2Path)) {
-      return res.status(404).json({ message: '画像ファイルが見つかりません' });
+      return res.status(404).json({ 
+        message: '画像ファイルが見つかりません',
+        details: {
+          img1Path,
+          img2Path,
+          img1Exists: fs.existsSync(img1Path),
+          img2Exists: fs.existsSync(img2Path),
+          screenshotsDir
+        }
+      });
     }
     
     // 差分画像の保存先ファイル名を生成
@@ -145,6 +196,11 @@ app.post('/api/diff', async (req, res) => {
       message: `差分検出に失敗しました: ${error.message}`
     });
   }
+});
+
+// ヘルスチェックエンドポイント
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // クライアントビルドを提供（本番環境用）

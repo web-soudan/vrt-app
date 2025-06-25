@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
+// API ベースURLの設定
+const getApiBaseUrl = () => {
+  // Electronアプリ内かどうかを判定
+  if (window.electronAPI || window.navigator.userAgent.includes('Electron')) {
+    return 'http://localhost:5002';
+  }
+  // 開発環境（Reactのプロキシ経由）
+  return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
 function App() {
   const [url, setUrl] = useState('https://example.com');
   const [delay, setDelay] = useState(2);
@@ -22,7 +34,7 @@ function App() {
   const cleanupImages = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post('/api/cleanup');
+      const response = await axios.post(`${API_BASE_URL}/api/cleanup`);
       console.log('クリーンアップの結果:', response.data);
       setCleanupStatus({
         success: true,
@@ -47,7 +59,7 @@ function App() {
     setErrorMessage('');
     
     try {
-      const response = await axios.post('/api/screenshot', {
+      const response = await axios.post(`${API_BASE_URL}/api/screenshot`, {
         url,
         delay
       });
@@ -70,11 +82,15 @@ function App() {
     // スクリーンショット取得
     const result = await takeScreenshot(url, delay);
     if (result) {
-      setScreenshot1(result.screenshotUrl);
+      const fullUrl = result.screenshotUrl.startsWith('http') ? result.screenshotUrl : `${API_BASE_URL}${result.screenshotUrl}`;
+      setScreenshot1(fullUrl);
+      
+      // ファイル名のみを保存（差分計算用）
+      window.screenshot1FileName = result.screenshotPath;
       
       // 2回目のスクリーンショットがある場合は差分を計算
-      if (screenshot2) {
-        calculateDiff(result.screenshotPath, screenshot2.replace('/uploads/', ''));
+      if (screenshot2 && window.screenshot2FileName) {
+        calculateDiff(window.screenshot1FileName, window.screenshot2FileName);
       }
     }
   };
@@ -83,11 +99,15 @@ function App() {
   const handleTakeScreenshot2 = async () => {
     const result = await takeScreenshot(url, delay);
     if (result) {
-      setScreenshot2(result.screenshotUrl);
+      const fullUrl = result.screenshotUrl.startsWith('http') ? result.screenshotUrl : `${API_BASE_URL}${result.screenshotUrl}`;
+      setScreenshot2(fullUrl);
+      
+      // ファイル名のみを保存（差分計算用）
+      window.screenshot2FileName = result.screenshotPath;
       
       // 1回目のスクリーンショットがある場合は差分を計算
-      if (screenshot1) {
-        calculateDiff(screenshot1.replace('/uploads/', ''), result.screenshotPath);
+      if (screenshot1 && window.screenshot1FileName) {
+        calculateDiff(window.screenshot1FileName, window.screenshot2FileName);
       }
     }
   };
@@ -97,18 +117,31 @@ function App() {
     setIsLoading(true);
     setErrorMessage('');
     
+    console.log('Calculating diff with paths:', { img1Path, img2Path, threshold });
+    
     try {
-      const response = await axios.post('/api/diff', {
+      const response = await axios.post(`${API_BASE_URL}/api/diff`, {
         img1: img1Path,
         img2: img2Path,
         threshold
       });
       
-      setDiffImage(response.data.diffUrl);
+      const diffUrl = response.data.diffUrl.startsWith('http') ? response.data.diffUrl : `${API_BASE_URL}${response.data.diffUrl}`;
+      setDiffImage(diffUrl);
       setDiffPercentage(response.data.diffPercentage);
     } catch (error) {
       console.error('Error calculating diff:', error);
-      setErrorMessage(error.response?.data?.message || '差分計算中にエラーが発生しました');
+      console.error('Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      
+      const errorMessage = error.response?.data?.details ? 
+        `差分計算中にエラーが発生しました: ${error.response.data.message}\n詳細: ${JSON.stringify(error.response.data.details, null, 2)}` :
+        error.response?.data?.message || '差分計算中にエラーが発生しました';
+        
+      setErrorMessage(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -120,6 +153,10 @@ function App() {
     setScreenshot2(null);
     setDiffImage(null);
     setDiffPercentage(null);
+    
+    // ファイル名のクリア
+    window.screenshot1FileName = null;
+    window.screenshot2FileName = null;
   };
   
   // 比較ビューのレンダリング

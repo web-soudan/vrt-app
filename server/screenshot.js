@@ -12,7 +12,9 @@ async function takeScreenshot(url, outputPath, delaySeconds = 0) {
   
   try {
     // ブラウザの起動
-    browser = await chromium.launch();
+    browser = await chromium.launch({
+      headless: true,
+    });
     const context = await browser.newContext({
       viewport: { width: 1280, height: 800 },
       deviceScaleFactor: 1,
