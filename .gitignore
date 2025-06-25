@@ -22,6 +22,27 @@
 !/server/diffs/.gitkeep
 !/server/uploads/.gitkeep
 
+# Electron build artifacts
+/dist/
+*.dmg
+*.zip
+*.tar.gz
+*.deb
+*.rpm
+*.AppImage
+
+# Electron specific
+electron/assets/icon.png
+electron/assets/icon.ico
+
+# Build configuration files
+builder-debug.yml
+builder-effective-config.yaml
+
+# Temporary files
+/tmp/vrt-server.pid
+*.log
+
 # misc
 .DS_Store
 .env
@@ -33,3 +54,14 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Package lock files (optional - uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
