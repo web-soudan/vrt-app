@@ -1,0 +1,83 @@
+name: Build macOS App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'リリースタグ (例: v1.0.0)。空の場合はビルド番号を使用'
+        required: false
+        type: string
+      prerelease:
+        description: 'プレリリースとしてマークする'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install client dependencies
+        run: npm install
+        working-directory: client
+
+      - name: Install server dependencies
+        run: npm install
+        working-directory: server
+
+      - name: Build app (DMG + ZIP)
+        run: ./build.sh mac --dist
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            echo "tag=v${VERSION}-build.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine prerelease flag
+        id: prerelease
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: VRT App ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ steps.prerelease.outputs.prerelease }}
+          body: |
+            ## VRT App ${{ steps.tag.outputs.tag }}
+
+            ### ダウンロード
+            - **Apple Silicon (M1/M2/M3)**: `*-arm64.dmg`
+            - **Intel Mac**: `*-x64.dmg`
+
+            > ZIP版はアプリを直接展開して使用できます。
+          files: |
+            dist/*.dmg
+            dist/*.zip
