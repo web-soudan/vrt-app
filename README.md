@@ -220,6 +220,17 @@ npm start
 - `PORT`: サーバーのポート番号（デフォルト: 5002）
 - `NODE_ENV`: 環境設定（development/production）
 
+## アップデート履歴
+
+### 2025-08-11
+- **Node.js v22.15.0対応**: canvasモジュールの互換性問題を修正
+- **React Dev Server設定改善**: allowedHostsエラーを解決
+- **Electronビルド設定改善**: 
+  - Playwrightブラウザの自動バンドル機能を追加
+  - 他のMac環境での実行時エラーを修正
+  - afterPackスクリプトでブラウザの自動インストール
+- **自動ブラウザ管理**: アプリ起動時にPlaywrightブラウザの存在確認と自動インストール機能を追加
+
 ## ライセンス
 
 MIT License

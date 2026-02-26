@@ -1,20 +1,11 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
 
-# dependencies
-/node_modules
-/client/node_modules
-/server/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# production
-/build
+# Build outputs
 /client/build
+/dist/
 
-# screenshots and diffs
+# Screenshots and generated image files
 /server/screenshots/*
 /server/diffs/*
 /server/uploads/*
@@ -22,38 +13,27 @@
 !/server/diffs/.gitkeep
 !/server/uploads/.gitkeep
 
-# Electron build artifacts
-/dist/
-*.dmg
-*.zip
-*.tar.gz
-*.deb
-*.rpm
-*.AppImage
+# Electron generated assets
+/electron/assets/icon.png
+/electron/assets/icon.icns
+/electron/assets/icon.ico
 
-# Electron specific
-electron/assets/icon.png
-electron/assets/icon.ico
-
-# Build configuration files
-builder-debug.yml
-builder-effective-config.yaml
-
-# Temporary files
-/tmp/vrt-server.pid
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# misc
-.DS_Store
+# Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# OS files
+.DS_Store
+Thumbs.db
 
 # Editor and IDE files
 .vscode/
@@ -62,6 +42,5 @@ yarn-error.log*
 *.swo
 *~
 
-# Package lock files (optional - uncomment if you want to ignore them)
-# package-lock.json
-# yarn.lock
+# Claude Code local settings
+.claude/settings.local.json

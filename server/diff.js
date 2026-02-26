@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { createCanvas, Image } = require('canvas');
+const { PNG } = require('pngjs');
 const pixelmatch = require('pixelmatch');
 
 /**
@@ -12,39 +12,31 @@ const pixelmatch = require('pixelmatch');
  */
 async function generateDiff(img1Path, img2Path, diffOutputPath, threshold = 0.1) {
   // 画像の読み込み
-  const img1 = await loadImage(img1Path);
-  const img2 = await loadImage(img2Path);
-  
+  const img1 = await readPNG(img1Path);
+  const img2 = await readPNG(img2Path);
+
   // 最大の寸法を取得（両方の画像を同じサイズにリサイズするため）
   const width = Math.max(img1.width, img2.width);
   const height = Math.max(img1.height, img2.height);
-  
-  // 1つ目の画像を配置（元の縦横比を保持）
-  const canvas1 = createCanvas(width, height);
-  const ctx1 = canvas1.getContext('2d');
-  ctx1.fillStyle = '#ffffff'; // 白背景で埋める
-  ctx1.fillRect(0, 0, width, height);
-  ctx1.drawImage(img1, 0, 0, img1.width, img1.height);
-  const img1Data = ctx1.getImageData(0, 0, width, height);
-  
-  // 2つ目の画像を配置（元の縦横比を保持）
-  const canvas2 = createCanvas(width, height);
-  const ctx2 = canvas2.getContext('2d');
-  ctx2.fillStyle = '#ffffff'; // 白背景で埋める
-  ctx2.fillRect(0, 0, width, height);
-  ctx2.drawImage(img2, 0, 0, img2.width, img2.height);
-  const img2Data = ctx2.getImageData(0, 0, width, height);
-  
-  // 差分画像用のキャンバス
-  const diffCanvas = createCanvas(width, height);
-  const diffCtx = diffCanvas.getContext('2d');
-  const diffData = diffCtx.createImageData(width, height);
-  
+
+  // 1つ目の画像を白背景のキャンバスに配置
+  const canvas1 = new PNG({ width, height });
+  canvas1.data.fill(255); // 白背景
+  copyImageData(img1, canvas1, width);
+
+  // 2つ目の画像を白背景のキャンバスに配置
+  const canvas2 = new PNG({ width, height });
+  canvas2.data.fill(255); // 白背景
+  copyImageData(img2, canvas2, width);
+
+  // 差分画像用のバッファ
+  const diffPNG = new PNG({ width, height });
+
   // pixelmatchを使用して差分を検出
   const diffPixels = pixelmatch(
-    img1Data.data,
-    img2Data.data,
-    diffData.data,
+    canvas1.data,
+    canvas2.data,
+    diffPNG.data,
     width,
     height,
     {
@@ -55,51 +47,72 @@ async function generateDiff(img1Path, img2Path, diffOutputPath, threshold = 0.1)
       aaColor: [0, 0, 255], // アンチエイリアス時の色（青）
     }
   );
-  
-  // 差分画像の描画
-  diffCtx.putImageData(diffData, 0, 0);
-  
+
   // 差分画像の保存
-  const out = fs.createWriteStream(diffOutputPath);
-  const stream = diffCanvas.createPNGStream();
-  stream.pipe(out);
-  
+  await savePNG(diffPNG, diffOutputPath);
+
+  const totalPixels = width * height;
+  const diffPercentage = diffPixels / totalPixels;
+
+  return {
+    diffPixels,
+    totalPixels,
+    diffPercentage,
+    width,
+    height,
+  };
+}
+
+/**
+ * PNG画像ファイルを読み込む
+ * @param {string} filePath - 画像ファイルのパス
+ * @returns {Promise<PNG>}
+ */
+function readPNG(filePath) {
   return new Promise((resolve, reject) => {
-    out.on('finish', () => {
-      // 差分率を計算
-      const totalPixels = width * height;
-      const diffPercentage = diffPixels / totalPixels;
-      
-      resolve({
-        diffPixels,
-        totalPixels,
-        diffPercentage,
-        width,
-        height,
-      });
-    });
-    out.on('error', reject);
+    fs.createReadStream(filePath)
+      .pipe(new PNG())
+      .on('parsed', function() {
+        resolve(this);
+      })
+      .on('error', reject);
   });
 }
 
 /**
- * 画像ファイルを読み込む
- * @param {string} path - 画像ファイルのパス
- * @returns {Promise<Image>} - Image オブジェクト
+ * 画像データをキャンバスにコピーする
+ * @param {PNG} src - コピー元画像
+ * @param {PNG} dst - コピー先キャンバス
+ * @param {number} dstWidth - コピー先の幅
  */
-function loadImage(path) {
+function copyImageData(src, dst, dstWidth) {
+  for (let y = 0; y < src.height; y++) {
+    for (let x = 0; x < src.width; x++) {
+      const srcIdx = (y * src.width + x) * 4;
+      const dstIdx = (y * dstWidth + x) * 4;
+      dst.data[dstIdx]     = src.data[srcIdx];
+      dst.data[dstIdx + 1] = src.data[srcIdx + 1];
+      dst.data[dstIdx + 2] = src.data[srcIdx + 2];
+      dst.data[dstIdx + 3] = src.data[srcIdx + 3];
+    }
+  }
+}
+
+/**
+ * PNG画像をファイルに保存する
+ * @param {PNG} png - 保存するPNG
+ * @param {string} filePath - 保存先パス
+ * @returns {Promise<void>}
+ */
+function savePNG(png, filePath) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = (err) => reject(new Error(`Failed to load image: ${err}`));
-    
-    // ファイルからバイナリデータを読み込み
-    const data = fs.readFileSync(path);
-    img.src = data;
+    const out = fs.createWriteStream(filePath);
+    png.pack().pipe(out);
+    out.on('finish', resolve);
+    out.on('error', reject);
   });
 }
 
 module.exports = {
   generateDiff,
 };
-  

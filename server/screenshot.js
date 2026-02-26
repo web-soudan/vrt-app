@@ -1,4 +1,29 @@
 const { chromium } = require('playwright');
+const path = require('path');
+const { execSync } = require('child_process');
+const fs = require('fs');
+
+async function ensurePlaywrightBrowsers() {
+  try {
+    // テスト用の軽量な起動を試行
+    const browser = await chromium.launch({ headless: true });
+    await browser.close();
+    return true;
+  } catch (error) {
+    console.log('Playwright browsers not found, installing...');
+    try {
+      // Playwrightブラウザを自動インストール
+      execSync('npx playwright install chromium', { 
+        stdio: 'inherit',
+        timeout: 300000 // 5分のタイムアウト
+      });
+      return true;
+    } catch (installError) {
+      console.error('Failed to install Playwright browsers:', installError);
+      return false;
+    }
+  }
+}
 
 /**
  * 指定したURLのスクリーンショットを撮影する
@@ -8,6 +33,12 @@ const { chromium } = require('playwright');
  * @returns {Promise<void>}
  */
 async function takeScreenshot(url, outputPath, delaySeconds = 0) {
+  // ブラウザの存在確認と自動インストール
+  const browsersReady = await ensurePlaywrightBrowsers();
+  if (!browsersReady) {
+    throw new Error('Playwright browsers are not available and could not be installed automatically');
+  }
+  
   let browser = null;
   
   try {
