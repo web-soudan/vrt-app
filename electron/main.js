@@ -1,8 +1,8 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
-const { fork } = require('child_process');
+const { fork, spawn } = require('child_process');
 
 const isDev = process.argv.includes('--dev');
 
@@ -137,6 +137,38 @@ function startServer() {
     }
   }
 }
+
+// アプリの新しいインスタンスを別プロセスとして起動する
+// （macOS はダブルクリックでは単一インスタンスにフォーカスするため、
+//  明示的に新規インスタンスを立ち上げる手段を提供する）
+function launchNewInstance() {
+  if (process.platform === 'darwin' && app.isPackaged) {
+    // .app バンドルのパスを取得し、open -n で新規インスタンスを強制起動
+    // exe: <bundle>/Contents/MacOS/<name> → 3つ上が .app バンドル
+    const appBundle = path.resolve(app.getPath('exe'), '..', '..', '..');
+    spawn('open', ['-n', appBundle], { detached: true, stdio: 'ignore' }).unref();
+  } else if (app.isPackaged) {
+    // Windows / Linux: 実行ファイルを直接起動
+    spawn(process.execPath, [], { detached: true, stdio: 'ignore' }).unref();
+  } else {
+    // 開発時: electron にプロジェクトディレクトリを渡して起動
+    const args = [path.resolve(__dirname, '..')];
+    if (isDev) {
+      args.push('--dev');
+    }
+    spawn(process.execPath, args, { detached: true, stdio: 'ignore' }).unref();
+  }
+}
+
+ipcMain.handle('launch-new-instance', () => {
+  try {
+    launchNewInstance();
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to launch new instance:', error);
+    return { success: false, message: error.message };
+  }
+});
 
 app.whenReady().then(() => {
   // サーバーを最初に起動
