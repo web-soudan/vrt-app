@@ -3,7 +3,7 @@
 # VRT Electron App Build Script
 # Usage: ./build.sh [platform] [--dist]
 # Platform options: mac, win, linux, all, current (default)
-# --dist: Create distribution packages (DMG/ZIP for Mac)
+# --dist: Create distribution packages (ZIP for Mac)
 
 set -e
 
