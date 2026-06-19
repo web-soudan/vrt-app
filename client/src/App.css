@@ -27,6 +27,18 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
 }
 
+/*
+ * スライダー比較用の range。
+ * ネイティブのつまみ(16px)は両端で半分(8px)内側に寄るため、
+ * range をその分だけ左右に広げ、つまみ中心の可動域を
+ * コンテナの 0〜100% に一致させて縦バーと中心を揃える。
+ */
+.vrt-slider-aligned {
+  width: calc(100% + 16px);
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
 input[type="range"]::-moz-range-thumb {
   width: 16px;
   height: 16px;
