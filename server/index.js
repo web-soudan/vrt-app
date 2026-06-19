@@ -29,10 +29,14 @@ const cleanupDirectory = (dir) => {
 };
 
 // ディレクトリの初期化
+// 複数起動に対応するため、Electron から VRT_SESSION_DIR が渡された場合は
+// インスタンス固有のディレクトリを作業領域として使用する（インスタンス間の干渉を防止）
 const isElectron = process.env.ELECTRON_APP === 'true' || process.versions.electron;
-const baseDir = isElectron && process.resourcesPath ? 
-  path.join(process.resourcesPath, 'server') : 
-  __dirname;
+const baseDir = process.env.VRT_SESSION_DIR ?
+  process.env.VRT_SESSION_DIR :
+  (isElectron && process.resourcesPath ?
+    path.join(process.resourcesPath, 'server') :
+    __dirname);
 
 const screenshotsDir = path.join(baseDir, 'screenshots');
 const diffsDir = path.join(baseDir, 'diffs');
@@ -228,7 +232,13 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // サーバーの起動
-const PORT = process.env.PORT || 5002;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// PORT=0 の場合は OS が空きポートを割り当てる（複数起動時のポート競合を回避）
+const PORT = process.env.PORT !== undefined ? Number(process.env.PORT) : 5002;
+const server = app.listen(PORT, () => {
+  const actualPort = server.address().port;
+  console.log(`Server running on port ${actualPort}`);
+  // Electron の main プロセスへ実際のポートを通知
+  if (process.send) {
+    process.send({ type: 'server-ready', port: actualPort });
+  }
 });
