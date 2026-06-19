@@ -40,7 +40,7 @@ jobs:
         run: npm install
         working-directory: server
 
-      - name: Build app (DMG + ZIP)
+      - name: Build app (ZIP)
         run: ./build.sh mac --dist
 
       - name: Determine release tag
@@ -74,10 +74,9 @@ jobs:
             ## VRT App ${{ steps.tag.outputs.tag }}
 
             ### ダウンロード
-            - **Apple Silicon (M1/M2/M3)**: `*-arm64.dmg`
-            - **Intel Mac**: `*-x64.dmg`
+            - **Apple Silicon (M1/M2/M3)**: `*-arm64.zip`
+            - **Intel Mac**: `*-x64.zip`
 
-            > ZIP版はアプリを直接展開して使用できます。
+            > ZIPを展開してアプリを直接実行できます。
           files: |
-            dist/*.dmg
             dist/*.zip

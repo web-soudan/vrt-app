@@ -4,11 +4,7 @@ function getMacConfig(withDist = false) {
     return {
       target: [
         {
-          target: 'dmg',
-          arch: ['arm64', 'x64']
-        },
-        {
-          target: 'zip', 
+          target: 'zip',
           arch: ['arm64', 'x64']
         }
       ],

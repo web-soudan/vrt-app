@@ -343,9 +343,9 @@ async function main() {
     
     console.log('🎯 Starting VRT Electron build process...');
     if (withDist) {
-      console.log('📦 Distribution packages (DMG/ZIP) will be created');
+      console.log('📦 Distribution packages (ZIP) will be created');
     } else {
-      console.log('📁 Creating app directory only (use --dist for DMG/ZIP)');
+      console.log('📁 Creating app directory only (use --dist for ZIP)');
     }
     
     await buildClient();
