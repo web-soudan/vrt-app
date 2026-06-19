@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -29,10 +29,56 @@ function App() {
   const [showDiffOverlay, setShowDiffOverlay] = useState(true);
   const [diffColor, setDiffColor] = useState('#ff0000');
   const [sliderPosition, setSliderPosition] = useState(50);
+  const [isDraggingDivider, setIsDraggingDivider] = useState(false);
+  // 画像の実表示幅（スクロールバー分を除く）。スライダーと縦バーの基準幅を揃えるために使用
+  const [trackWidth, setTrackWidth] = useState(0);
+  const sliderContainerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [cleanupStatus, setCleanupStatus] = useState(null);
-  
+
+  // 縦線（仕切り）をマウスでドラッグして位置を変更できるようにする
+  const handleDividerMouseDown = (e) => {
+    e.preventDefault();
+    setIsDraggingDivider(true);
+  };
+
+  useEffect(() => {
+    if (!isDraggingDivider) {
+      return;
+    }
+    const updateFromClientX = (clientX) => {
+      const container = sliderContainerRef.current;
+      if (!container) {
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const ratio = ((clientX - rect.left) / rect.width) * 100;
+      setSliderPosition(Math.max(0, Math.min(100, ratio)));
+    };
+    const handleMouseMove = (e) => updateFromClientX(e.clientX);
+    const handleMouseUp = () => setIsDraggingDivider(false);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingDivider]);
+
+  // スライダーの基準幅を、画像の実表示幅（縦スクロールバーを除いた幅）に合わせる
+  useEffect(() => {
+    const el = sliderContainerRef.current;
+    if (!el) {
+      return;
+    }
+    const update = () => setTrackWidth(el.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [viewMode, screenshot1, screenshot2]);
+
   // 画像ファイルをクリーンアップする関数
   const cleanupImages = async () => {
     setIsLoading(true);
@@ -221,43 +267,64 @@ function App() {
       case 'slider':
         return (
           <div className="relative border border-gray-300">
-            <div className="w-full relative overflow-auto" style={{ maxHeight: '600px' }}>
-              <div className="slider-container relative">
-                <img 
-                  src={screenshot1} 
-                  alt="スクリーンショット1" 
-                  className="w-full" 
-                  style={{ display: 'block' }} 
-                />
-                <div 
-                  className="absolute top-0 left-0 h-full overflow-hidden" 
-                  style={{ width: `${sliderPosition}%` }}
-                >
-                  <div className="h-full" style={{ width: `${100 / sliderPosition * 100}%`, position: 'relative' }}>
-                    <img 
-                      src={screenshot2} 
-                      alt="スクリーンショット2" 
-                      className="w-full" 
-                      style={{ display: 'block' }} 
-                    />
-                  </div>
-                </div>
-                <div 
-                  className="absolute top-0 bottom-0 w-1 bg-blue-500 cursor-ew-resize z-10"
-                  style={{ left: `${sliderPosition}%` }}
-                ></div>
-              </div>
-            </div>
+            {/* 上部スライダー */}
             <input
               type="range"
               min="0"
               max="100"
               value={sliderPosition}
               onChange={(e) => setSliderPosition(Number(e.target.value))}
-              className="w-full mt-2"
+              className="vrt-slider-aligned mb-2"
+              style={trackWidth ? { width: `${trackWidth + 16}px` } : undefined}
+            />
+            <div className="w-full relative overflow-auto" style={{ maxHeight: '600px' }}>
+              <div className="slider-container relative" ref={sliderContainerRef}>
+                <img
+                  src={screenshot1}
+                  alt="スクリーンショット1"
+                  className="w-full"
+                  style={{ display: 'block' }}
+                  draggable={false}
+                />
+                <div
+                  className="absolute top-0 left-0 h-full overflow-hidden"
+                  style={{ width: `${sliderPosition}%` }}
+                >
+                  <div className="h-full" style={{ width: `${sliderPosition > 0 ? 100 / sliderPosition * 100 : 100}%`, position: 'relative' }}>
+                    <img
+                      src={screenshot2}
+                      alt="スクリーンショット2"
+                      className="w-full"
+                      style={{ display: 'block' }}
+                      draggable={false}
+                    />
+                  </div>
+                </div>
+                {/* ドラッグ可能な縦線（仕切り）。バー中心を境界線(left: V%)に合わせる */}
+                <div
+                  className="absolute top-0 bottom-0 w-1 bg-blue-500 cursor-ew-resize z-10"
+                  style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
+                  onMouseDown={handleDividerMouseDown}
+                >
+                  {/* 掴みやすいノブ */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-blue-500 rounded-full shadow-md border-2 border-white flex items-center justify-center text-white text-xs select-none">
+                    ⇔
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* 下部スライダー */}
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={sliderPosition}
+              onChange={(e) => setSliderPosition(Number(e.target.value))}
+              className="vrt-slider-aligned mt-2"
+              style={trackWidth ? { width: `${trackWidth + 16}px` } : undefined}
             />
             <div className="text-center text-sm text-gray-500 mt-2">
-              左に動かすと左側の画像、右に動かすと右側の画像が多く表示されます
+              上下のスライダーを動かすか、縦線をドラッグして比較位置を変更できます
             </div>
           </div>
         );
