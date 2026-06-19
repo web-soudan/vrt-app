@@ -1,13 +1,22 @@
 const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
+const os = require('os');
+const fs = require('fs');
 const { fork } = require('child_process');
-
-let mainWindow;
-let serverProcess;
 
 const isDev = process.argv.includes('--dev');
 
+let mainWindow;
+let serverProcess;
+let sessionDir = null;
+// dev はプロキシ経由の固定ポート、本番はサーバーから通知された動的ポートを使用
+let apiPort = isDev ? 5002 : null;
+
 function createWindow() {
+  // server-ready 通知とフォールバックの二重生成を防止
+  if (mainWindow) {
+    return;
+  }
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -24,7 +33,9 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../client/build/index.html'));
+    // 動的ポートをクエリ文字列でレンダラーへ渡す
+    const loadOptions = apiPort ? { search: 'apiPort=' + apiPort } : {};
+    mainWindow.loadFile(path.join(__dirname, '../client/build/index.html'), loadOptions);
   }
 
   mainWindow.on('closed', () => {
@@ -37,7 +48,11 @@ let serverStarted = false;
 function checkServerHealth() {
   const http = require('http');
   return new Promise((resolve) => {
-    const req = http.get('http://localhost:5002/health', (res) => {
+    if (!apiPort) {
+      resolve(false);
+      return;
+    }
+    const req = http.get('http://localhost:' + apiPort + '/health', (res) => {
       resolve(res.statusCode === 200);
     });
     req.on('error', () => resolve(false));
@@ -51,21 +66,40 @@ function checkServerHealth() {
 function startServer() {
   if (!serverStarted) {
     console.log('Starting server process...');
-    const serverPath = isDev ? 
-      path.join(__dirname, '../server/index.js') : 
+    const serverPath = isDev ?
+      path.join(__dirname, '../server/index.js') :
       path.join(process.resourcesPath, 'server/index.js');
     console.log('Server path:', serverPath);
     console.log('isDev:', isDev);
-    
+
     try {
-      const serverCwd = isDev ? 
-        path.join(__dirname, '../server') : 
+      const serverCwd = isDev ?
+        path.join(__dirname, '../server') :
         path.join(process.resourcesPath, 'server');
-      
+
+      // 複数起動に対応するため、本番では動的ポート(0)とインスタンス固有の
+      // 作業ディレクトリを使用し、インスタンス間の競合・干渉を防止する
+      const serverEnv = { ...process.env, ELECTRON_APP: 'true' };
+      if (isDev) {
+        serverEnv.PORT = '5002';
+      } else {
+        serverEnv.PORT = '0';
+        sessionDir = path.join(os.tmpdir(), 'vrt-app-' + process.pid + '-' + Date.now());
+        serverEnv.VRT_SESSION_DIR = sessionDir;
+      }
+
       serverProcess = fork(serverPath, {
         silent: false,
         cwd: serverCwd,
-        env: { ...process.env, PORT: '5002', ELECTRON_APP: 'true' }
+        env: serverEnv
+      });
+
+      serverProcess.on('message', (msg) => {
+        if (msg && msg.type === 'server-ready' && msg.port) {
+          apiPort = msg.port;
+          console.log('Server ready on port ' + apiPort);
+          createWindow();
+        }
       });
 
       serverProcess.on('error', (error) => {
@@ -107,11 +141,12 @@ function startServer() {
 app.whenReady().then(() => {
   // サーバーを最初に起動
   startServer();
-  
-  // サーバー起動後にウィンドウを表示
+
+  // 本番はサーバーの server-ready 通知でウィンドウを生成するが、
+  // 通知が届かない場合に備えてフォールバックでも生成する
   setTimeout(() => {
     createWindow();
-  }, isDev ? 0 : 3000);
+  }, isDev ? 0 : 8000);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -130,5 +165,13 @@ app.on('before-quit', () => {
   if (serverProcess) {
     console.log('Terminating server process...');
     serverProcess.kill();
+  }
+  // インスタンス固有の一時ディレクトリを破棄
+  if (sessionDir) {
+    try {
+      fs.rmSync(sessionDir, { recursive: true, force: true });
+    } catch (error) {
+      console.error('Failed to clean up session dir:', error);
+    }
   }
 });

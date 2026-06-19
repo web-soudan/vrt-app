@@ -6,7 +6,10 @@ import './App.css';
 const getApiBaseUrl = () => {
   // Electronアプリ内かどうかを判定
   if (window.electronAPI || window.navigator.userAgent.includes('Electron')) {
-    return 'http://localhost:5002';
+    // 複数起動対応: main プロセスがクエリ文字列で渡した動的ポートを使用
+    // （渡されない場合は従来の 5002 にフォールバック）
+    const apiPort = new URLSearchParams(window.location.search).get('apiPort');
+    return `http://localhost:${apiPort || '5002'}`;
   }
   // 開発環境（Reactのプロキシ経由）
   return '';

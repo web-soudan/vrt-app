@@ -128,6 +128,19 @@ async function createElectronMain() {
     fs.mkdirSync(electronDir, { recursive: true });
   }
 
+  // 既に electron/main.js が存在する場合はリポジトリ管理下のファイルを正として
+  // 尊重し、上書きしない（以下の文字列テンプレートは未スキャフォールド時の初期生成用）
+  const mainJsPath = path.join(electronDir, 'main.js');
+  const preloadJsPath = path.join(electronDir, 'preload.js');
+  if (fs.existsSync(mainJsPath) && fs.existsSync(preloadJsPath)) {
+    console.log('✅ Existing electron/main.js & preload.js found, keeping them');
+    const assetsDir = path.join(electronDir, 'assets');
+    if (!fs.existsSync(assetsDir)) {
+      fs.mkdirSync(assetsDir, { recursive: true });
+    }
+    return;
+  }
+
   const mainJsLines = [
     "const { app, BrowserWindow, Menu } = require('electron');",
     "const path = require('path');",
