@@ -42,7 +42,22 @@ ensureDirExists(screenshotsDir);
 ensureDirExists(diffsDir);
 ensureDirExists(uploadsDir);
 
-console.log('Server environment:', { 
+// 起動時に前回実行時の画像ファイルを削除（残存ファイルによるエラーを防止）
+const startupCleanup = () => {
+  try {
+    const screenshotsCount = cleanupDirectory(screenshotsDir);
+    const diffsCount = cleanupDirectory(diffsDir);
+    const uploadsCount = cleanupDirectory(uploadsDir);
+    console.log(
+      `起動時クリーンアップ完了: スクリーンショット ${screenshotsCount}件、差分 ${diffsCount}件、アップロード ${uploadsCount}件を削除しました`
+    );
+  } catch (error) {
+    console.error('Startup cleanup error:', error);
+  }
+};
+startupCleanup();
+
+console.log('Server environment:', {
   isElectron, 
   baseDir, 
   screenshotsDir, 
