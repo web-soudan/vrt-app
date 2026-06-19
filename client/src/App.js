@@ -150,6 +150,25 @@ function App() {
     }
   };
   
+  // 新しいアプリ（インスタンス）を起動するハンドラ
+  const handleLaunchNewInstance = async () => {
+    if (!window.electronAPI || !window.electronAPI.launchNewInstance) {
+      return;
+    }
+    try {
+      const result = await window.electronAPI.launchNewInstance();
+      if (!result || !result.success) {
+        setErrorMessage(`新しいアプリの起動に失敗しました${result && result.message ? ': ' + result.message : ''}`);
+      }
+    } catch (error) {
+      console.error('Launch new instance error:', error);
+      setErrorMessage('新しいアプリの起動に失敗しました');
+    }
+  };
+
+  // Electron 上で動作しているか（ボタン表示の判定用）
+  const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
+
   // クリアボタンのハンドラ
   const handleClear = () => {
     setScreenshot1(null);
@@ -311,6 +330,14 @@ function App() {
           >
             クリア
           </button>
+          {isElectron && (
+            <button
+              onClick={handleLaunchNewInstance}
+              className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded ml-auto"
+            >
+              新しいアプリを起動
+            </button>
+          )}
         </div>
         
         {isLoading && <div className="mt-4 text-blue-500">処理中...</div>}
