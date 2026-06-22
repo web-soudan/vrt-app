@@ -44,7 +44,7 @@ async function prepareElectronPackage(withDist = false) {
   
   const electronPackage = {
     name: 'vrt-app',
-    version: '2.0.0',
+    version: '2.1.0',
     description: 'Visual Regression Testing Application',
     main: 'electron/main.js',
     author: 'VRT Team',
