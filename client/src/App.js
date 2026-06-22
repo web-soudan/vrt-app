@@ -351,29 +351,31 @@ function App() {
           />
         </div>
         
-        <div className="mb-4">
-          <label className="block mb-2">スクリーンショット前の待機時間 (秒):</label>
-          <input
-            type="number"
-            value={delay}
-            onChange={(e) => setDelay(Number(e.target.value))}
-            className="w-full p-2 border border-gray-300 rounded"
-            min="0"
-            step="0.5"
-          />
-        </div>
-        
-        <div className="mb-4">
-          <label className="block mb-2">差分検出のしきい値 (0.0 ~ 1.0):</label>
-          <input
-            type="number"
-            value={threshold}
-            onChange={(e) => setThreshold(Number(e.target.value))}
-            className="w-full p-2 border border-gray-300 rounded"
-            min="0"
-            max="1"
-            step="0.01"
-          />
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <label className="block mb-2">スクリーンショット前の待機時間 (秒):</label>
+            <input
+              type="number"
+              value={delay}
+              onChange={(e) => setDelay(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded"
+              min="0"
+              step="0.5"
+            />
+          </div>
+
+          <div className="flex-1">
+            <label className="block mb-2">差分検出のしきい値 (0.0 ~ 1.0):</label>
+            <input
+              type="number"
+              value={threshold}
+              onChange={(e) => setThreshold(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded"
+              min="0"
+              max="1"
+              step="0.01"
+            />
+          </div>
         </div>
         
         <div className="flex flex-wrap gap-4">
@@ -494,6 +496,11 @@ function App() {
                 />
                 <span className="ml-2">差分の色</span>
               </div>
+              {diffPercentage !== null && (
+                <span className="font-bold">
+                  差分: {(diffPercentage * 100).toFixed(2)}%
+                </span>
+              )}
             </div>
           )}
           
