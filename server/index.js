@@ -119,7 +119,8 @@ app.post('/api/screenshot', async (req, res) => {
     
     // スクリーンショットを撮影
     console.log('Taking screenshot:', { url, screenshotPath, delay });
-    await takeScreenshot(url, screenshotPath, delay);
+    const { ipAddress } = await takeScreenshot(url, screenshotPath, delay);
+    const capturedAt = new Date().toISOString();
     
     console.log('Screenshot saved:', { 
       screenshotPath, 
@@ -138,7 +139,9 @@ app.post('/api/screenshot', async (req, res) => {
     res.json({
       success: true,
       screenshotPath: filename,
-      screenshotUrl: `/uploads/${filename}`
+      screenshotUrl: `/uploads/${filename}`,
+      ipAddress,
+      capturedAt
     });
   } catch (error) {
     console.error('Screenshot error:', error);

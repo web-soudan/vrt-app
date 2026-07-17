@@ -17,12 +17,19 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+// 取得時刻の表示用フォーマット
+const formatCapturedAt = (capturedAt) =>
+  capturedAt ? new Date(capturedAt).toLocaleString('ja-JP') : '';
+
 function App() {
   const [url, setUrl] = useState('https://example.com');
   const [delay, setDelay] = useState(2);
   const [threshold, setThreshold] = useState(0.1);
   const [screenshot1, setScreenshot1] = useState(null);
   const [screenshot2, setScreenshot2] = useState(null);
+  // 各スクリーンショット取得時の接続先IPアドレスと取得時刻
+  const [screenshot1Info, setScreenshot1Info] = useState(null);
+  const [screenshot2Info, setScreenshot2Info] = useState(null);
   const [diffImage, setDiffImage] = useState(null);
   const [diffPercentage, setDiffPercentage] = useState(null);
   const [viewMode, setViewMode] = useState('diff');
@@ -133,7 +140,8 @@ function App() {
     if (result) {
       const fullUrl = result.screenshotUrl.startsWith('http') ? result.screenshotUrl : `${API_BASE_URL}${result.screenshotUrl}`;
       setScreenshot1(fullUrl);
-      
+      setScreenshot1Info({ ipAddress: result.ipAddress || null, capturedAt: result.capturedAt || null });
+
       // ファイル名のみを保存（差分計算用）
       window.screenshot1FileName = result.screenshotPath;
       
@@ -150,7 +158,8 @@ function App() {
     if (result) {
       const fullUrl = result.screenshotUrl.startsWith('http') ? result.screenshotUrl : `${API_BASE_URL}${result.screenshotUrl}`;
       setScreenshot2(fullUrl);
-      
+      setScreenshot2Info({ ipAddress: result.ipAddress || null, capturedAt: result.capturedAt || null });
+
       // ファイル名のみを保存（差分計算用）
       window.screenshot2FileName = result.screenshotPath;
       
@@ -219,6 +228,8 @@ function App() {
   const handleClear = () => {
     setScreenshot1(null);
     setScreenshot2(null);
+    setScreenshot1Info(null);
+    setScreenshot2Info(null);
     setDiffImage(null);
     setDiffPercentage(null);
     
@@ -428,7 +439,14 @@ function App() {
       {/* スクリーンショット表示エリア */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">1回目のスクリーンショット</h2>
+          <div className="flex flex-wrap items-baseline gap-x-3 mb-4">
+            <h2 className="text-xl font-bold">1回目のスクリーンショット</h2>
+            {screenshot1Info && (
+              <span className="text-sm text-gray-600">
+                IP: {screenshot1Info.ipAddress || '不明'} / {formatCapturedAt(screenshot1Info.capturedAt)}
+              </span>
+            )}
+          </div>
           <div className="border border-gray-200 bg-gray-50 h-64 flex items-center justify-center overflow-hidden">
             {screenshot1 ? (
               <img src={screenshot1} alt="スクリーンショット1" className="max-w-full max-h-full" />
@@ -439,7 +457,14 @@ function App() {
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">2回目のスクリーンショット</h2>
+          <div className="flex flex-wrap items-baseline gap-x-3 mb-4">
+            <h2 className="text-xl font-bold">2回目のスクリーンショット</h2>
+            {screenshot2Info && (
+              <span className="text-sm text-gray-600">
+                IP: {screenshot2Info.ipAddress || '不明'} / {formatCapturedAt(screenshot2Info.capturedAt)}
+              </span>
+            )}
+          </div>
           <div className="border border-gray-200 bg-gray-50 h-64 flex items-center justify-center overflow-hidden">
             {screenshot2 ? (
               <img src={screenshot2} alt="スクリーンショット2" className="max-w-full max-h-full" />

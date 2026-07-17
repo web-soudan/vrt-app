@@ -30,7 +30,7 @@ async function ensurePlaywrightBrowsers() {
  * @param {string} url - スクリーンショットを撮影するURL
  * @param {string} outputPath - スクリーンショットの保存先パス
  * @param {number} delaySeconds - ページロード後の待機時間（秒）
- * @returns {Promise<void>}
+ * @returns {Promise<{ipAddress: string|null}>} 実際に接続したサーバーの情報
  */
 async function takeScreenshot(url, outputPath, delaySeconds = 0) {
   // ブラウザの存在確認と自動インストール
@@ -53,23 +53,34 @@ async function takeScreenshot(url, outputPath, delaySeconds = 0) {
     const page = await context.newPage();
     
     // URLの読み込み
-    await page.goto(url, {
+    const response = await page.goto(url, {
       waitUntil: 'networkidle',
       timeout: 60000, // 60秒のタイムアウト
     });
-    
+
+    // 実際に接続したサーバーのIPアドレス（DNSラウンドロビンやLBで毎回変わり得る）
+    let ipAddress = null;
+    if (response) {
+      const serverAddr = await response.serverAddr();
+      if (serverAddr) {
+        ipAddress = serverAddr.ipAddress;
+      }
+    }
+
     // 指定された遅延時間だけ待機
     if (delaySeconds > 0) {
       await page.waitForTimeout(delaySeconds * 1000);
     }
-    
+
     // スクリーンショットの撮影
     await page.screenshot({
       path: outputPath,
       fullPage: true, // ページ全体を撮影
     });
-    
-    console.log(`Screenshot saved to ${outputPath}`);
+
+    console.log(`Screenshot saved to ${outputPath}`, { ipAddress });
+
+    return { ipAddress };
   } catch (error) {
     console.error('Error taking screenshot:', error);
     throw error;
