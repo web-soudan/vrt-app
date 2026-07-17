@@ -107,7 +107,7 @@ app.post('/api/cleanup', (req, res) => {
 // スクリーンショットの取得エンドポイント
 app.post('/api/screenshot', async (req, res) => {
   try {
-    const { url, delay = 0 } = req.body;
+    const { url, delay = 0, disableLazyload = false, disableAnimations = false } = req.body;
     
     if (!url) {
       return res.status(400).json({ message: 'URLが必要です' });
@@ -118,8 +118,8 @@ app.post('/api/screenshot', async (req, res) => {
     const screenshotPath = path.join(screenshotsDir, filename);
     
     // スクリーンショットを撮影
-    console.log('Taking screenshot:', { url, screenshotPath, delay });
-    const { ipAddress } = await takeScreenshot(url, screenshotPath, delay);
+    console.log('Taking screenshot:', { url, screenshotPath, delay, disableLazyload, disableAnimations });
+    const { ipAddress } = await takeScreenshot(url, screenshotPath, delay, disableLazyload, disableAnimations);
     const capturedAt = new Date().toISOString();
     
     console.log('Screenshot saved:', { 

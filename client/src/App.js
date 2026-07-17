@@ -24,6 +24,8 @@ const formatCapturedAt = (capturedAt) =>
 function App() {
   const [url, setUrl] = useState('https://example.com');
   const [delay, setDelay] = useState(2);
+  const [disableLazyload, setDisableLazyload] = useState(false);
+  const [disableAnimations, setDisableAnimations] = useState(false);
   const [threshold, setThreshold] = useState(0.1);
   const [screenshot1, setScreenshot1] = useState(null);
   const [screenshot2, setScreenshot2] = useState(null);
@@ -117,7 +119,9 @@ function App() {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/screenshot`, {
         url,
-        delay
+        delay,
+        disableLazyload,
+        disableAnimations
       });
       
       return response.data;
@@ -388,7 +392,28 @@ function App() {
             />
           </div>
         </div>
-        
+
+        <div className="mb-4 flex flex-col gap-2">
+          <label className="inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={disableLazyload}
+              onChange={(e) => setDisableLazyload(e.target.checked)}
+              className="w-4 h-4 mr-2"
+            />
+            画像の遅延読み込み (lazyload) を無効化して全画像を読み込む
+          </label>
+          <label className="inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={disableAnimations}
+              onChange={(e) => setDisableAnimations(e.target.checked)}
+              className="w-4 h-4 mr-2"
+            />
+            アニメーション・スライダーを停止する
+          </label>
+        </div>
+
         <div className="flex flex-wrap gap-4">
           <button
             onClick={handleTakeScreenshot1}
