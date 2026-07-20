@@ -134,7 +134,15 @@ function App() {
   const handleTakeScreenshot1 = async () => {
     // まず画像をクリーンアップ
     await cleanupImages();
-    
+
+    // クリーンアップで2回目のスクリーンショットと差分画像の実体も削除されるため、
+    // 画面の状態も合わせてリセットする（残したままだと存在しないファイルで差分計算しエラーになる）
+    setScreenshot2(null);
+    setScreenshot2Info(null);
+    setDiffImage(null);
+    setDiffPercentage(null);
+    window.screenshot2FileName = null;
+
     // スクリーンショット取得
     const result = await takeScreenshot(url, delay);
     if (result) {
@@ -144,11 +152,6 @@ function App() {
 
       // ファイル名のみを保存（差分計算用）
       window.screenshot1FileName = result.screenshotPath;
-      
-      // 2回目のスクリーンショットがある場合は差分を計算
-      if (screenshot2 && window.screenshot2FileName) {
-        calculateDiff(window.screenshot1FileName, window.screenshot2FileName);
-      }
     }
   };
   
