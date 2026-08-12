@@ -223,6 +223,13 @@ npm start
 
 ## アップデート履歴
 
+### 2026-08-12
+- **配布先のMacでスクリーンショット取得が失敗する不具合を修正**: パッケージ後の `.app` に Playwright の Chromium が同梱されておらず、開発機以外の環境（`npx` 等が使えないGUIアプリの実行環境）では「Playwright browsers are not available and could not be installed automatically」エラーで失敗していた
+  - `afterPack` フックを electron-builder のビルド設定に接続し、パッケージング時に Chromium を `.app` バンドル内へ実際にインストールするよう修正
+  - 実行時にサーバープロセスへ `PLAYWRIGHT_BROWSERS_PATH` を渡し、同梱したブラウザを参照できるように修正
+  - Apple Silicon 機で Intel(x64) 向けをビルドした際に誤って arm64 版が同梱される問題も合わせて修正
+- バージョンを 2.3.1 に更新
+
 ### 2026-07-17 (2)
 - **画像の遅延読み込み(lazyload)を無効化するオプションを追加**: `loading="lazy"` や data-src 系ライブラリの画像を強制読み込みし、ページ全体を1画面ずつスクロールして IntersectionObserver / jquery.inview 系の遅延表示（フェードイン演出含む）も発火させてから撮影
 - **アニメーション・スライダーを停止するオプションを追加**: CSSアニメーション・動画・Swiper/Slick の自動再生を停止し、タイマーと requestAnimationFrame を無効化して JS 駆動スライダー（Splide の auto-scroll 等）も汎用的に凍結。スライダーのトラック位置は先頭にリセットし、撮影ごとの差分を抑制

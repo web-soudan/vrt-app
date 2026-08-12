@@ -86,6 +86,10 @@ function startServer() {
         serverEnv.PORT = '0';
         sessionDir = path.join(os.tmpdir(), 'vrt-app-' + process.pid + '-' + Date.now());
         serverEnv.VRT_SESSION_DIR = sessionDir;
+        // afterPack (scripts/afterPack.js) が .app に同梱した Chromium の場所を指定する。
+        // 未指定だとエンドユーザーの環境では既定のブラウザキャッシュが存在せず、
+        // npx 等も使えないため起動時のスクリーンショット取得が失敗する。
+        serverEnv.PLAYWRIGHT_BROWSERS_PATH = path.join(process.resourcesPath, 'playwright-browsers');
       }
 
       serverProcess = fork(serverPath, {

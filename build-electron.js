@@ -44,7 +44,7 @@ async function prepareElectronPackage(withDist = false) {
   
   const electronPackage = {
     name: 'vrt-app',
-    version: '2.3.0',
+    version: '2.3.1',
     description: 'Visual Regression Testing Application',
     main: 'electron/main.js',
     author: 'VRT Team',
@@ -111,6 +111,9 @@ async function prepareElectronPackage(withDist = false) {
         ],
         icon: 'electron/assets/icon.png'
       },
+      // パッケージ後の .app に Playwright の Chromium を同梱する
+      // （未同梱だと配布先のMacでスクリーンショット取得が失敗する）
+      afterPack: 'scripts/afterPack.js',
       publish: null
     }
   };
