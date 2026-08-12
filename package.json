@@ -1,6 +1,6 @@
 {
   "name": "vrt-app",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Visual Regression Testing Application",
   "main": "electron/main.js",
   "author": "VRT Team",
@@ -93,6 +93,7 @@
       ],
       "icon": "electron/assets/icon.png"
     },
+    "afterPack": "scripts/afterPack.js",
     "publish": null
   }
 }
