@@ -223,6 +223,10 @@ npm start
 
 ## アップデート履歴
 
+### 2026-10-24
+- **スクリーンショット撮影用の Playwright を 1.53.1 から 1.64.1 に更新**: 撮影に使う Chromium を 138 系から 156.0.8078.4 に更新（Playwright 1.64 の公式対応は macOS 14 以降）
+- バージョンを 2.3.2 に更新
+
 ### 2026-08-12
 - **配布先のMacでスクリーンショット取得が失敗する不具合を修正**: パッケージ後の `.app` に Playwright の Chromium が同梱されておらず、開発機以外の環境（`npx` 等が使えないGUIアプリの実行環境）では「Playwright browsers are not available and could not be installed automatically」エラーで失敗していた
   - `afterPack` フックを electron-builder のビルド設定に接続し、パッケージング時に Chromium を `.app` バンドル内へ実際にインストールするよう修正
