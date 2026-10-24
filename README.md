@@ -225,6 +225,9 @@ npm start
 
 ### 2026-10-24
 - **スクリーンショット撮影用の Playwright を 1.53.1 から 1.64.1 に更新**: 撮影に使う Chromium を 138 系から 156.0.8078.4 に更新（Playwright 1.64 の公式対応は macOS 14 以降）
+- **Electron を 27 から 44.9.3 に更新**: Electron 27 内蔵の Node.js 18 では Playwright 1.64 が起動せず、配布版でスクリーンショットが取得できない問題を解消（Node.js 24 で動作）
+- **npm audit で検出された脆弱性に対応**: express などの依存パッケージを更新し、uuid を Node.js 標準の `crypto.randomUUID()` に置き換え。electron-builder を 26、electron-rebuild を後継の @electron/rebuild に変更
+- **ビルド設定を修正**: electron-builder 26 で除外される `server/node_modules` を明示的に同梱し、`afterPack` では同梱版 Playwright の CLI を直接実行して Chromium の版ずれを防止。ビルド時に生成する package.json のバージョンも 2.3.2 に修正
 - バージョンを 2.3.2 に更新
 
 ### 2026-08-12

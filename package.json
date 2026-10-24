@@ -14,9 +14,9 @@
     "build-all": "electron-builder --mac --win --linux"
   },
   "devDependencies": {
-    "electron": "^27.0.0",
-    "electron-builder": "^24.6.4",
-    "electron-rebuild": "^3.2.9"
+    "@electron/rebuild": "^4.2.1",
+    "electron": "^44.9.3",
+    "electron-builder": "^26.18.0"
   },
   "build": {
     "appId": "com.vrt.app",
@@ -43,6 +43,10 @@
           "!uploads/**/*",
           "!diffs/**/*"
         ]
+      },
+      {
+        "from": "server/node_modules",
+        "to": "server/node_modules"
       }
     ],
     "mac": {

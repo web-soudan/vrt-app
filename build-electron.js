@@ -44,7 +44,7 @@ async function prepareElectronPackage(withDist = false) {
   
   const electronPackage = {
     name: 'vrt-app',
-    version: '2.3.1',
+    version: '2.3.2',
     description: 'Visual Regression Testing Application',
     main: 'electron/main.js',
     author: 'VRT Team',
@@ -58,9 +58,9 @@ async function prepareElectronPackage(withDist = false) {
       'build-all': 'electron-builder --mac --win --linux'
     },
     devDependencies: {
-      'electron': '^27.0.0',
-      'electron-builder': '^24.6.4',
-      'electron-rebuild': '^3.2.9'
+      '@electron/rebuild': '^4.2.1',
+      'electron': '^44.9.3',
+      'electron-builder': '^26.18.0'
     },
     build: {
       appId: 'com.vrt.app',
@@ -82,6 +82,12 @@ async function prepareElectronPackage(withDist = false) {
           from: 'server',
           to: 'server',
           filter: ['**/*', '!screenshots/**/*', '!uploads/**/*', '!diffs/**/*']
+        },
+        // electron-builder 25 以降はコピー元直下の node_modules を常に除外するため、
+        // サーバーの依存パッケージは別エントリで明示的に同梱する
+        {
+          from: 'server/node_modules',
+          to: 'server/node_modules'
         }
       ],
       mac: getMacConfig(withDist),

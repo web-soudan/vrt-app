@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const { takeScreenshot } = require('./screenshot');
 const { generateDiff } = require('./diff');
 
@@ -114,7 +114,7 @@ app.post('/api/screenshot', async (req, res) => {
     }
     
     // スクリーンショットの保存先ファイル名を生成
-    const filename = `${uuidv4()}.png`;
+    const filename = `${randomUUID()}.png`;
     const screenshotPath = path.join(screenshotsDir, filename);
     
     // スクリーンショットを撮影
@@ -196,7 +196,7 @@ app.post('/api/diff', async (req, res) => {
     }
     
     // 差分画像の保存先ファイル名を生成
-    const diffFilename = `diff-${uuidv4()}.png`;
+    const diffFilename = `diff-${randomUUID()}.png`;
     const diffPath = path.join(diffsDir, diffFilename);
     
     // 差分を生成
