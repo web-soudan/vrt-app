@@ -1,6 +1,6 @@
 const os = require('os');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const { Arch } = require('electron-builder');
 
 // パッケージ後のリソースディレクトリ（.app バンドル内など）の絶対パスを求める。
@@ -52,7 +52,11 @@ exports.default = async function(context) {
   // Chromium をアプリバンドル内の専用ディレクトリへインストールする。
   // 実行時（server/index.js の起動時）に同じ PLAYWRIGHT_BROWSERS_PATH を渡すことで、
   // エンドユーザーの環境で npx 等に頼らず起動時から参照できるようにする。
-  execSync('npx playwright install chromium', {
+  // npx は同梱先に .bin が無いと上位ディレクトリや npm レジストリの別バージョンの
+  // playwright を使ってしまい、同梱版と合わない Chromium が入るため、同梱した
+  // playwright の CLI を直接実行する。
+  const playwrightCli = path.join(serverPath, 'node_modules', 'playwright', 'cli.js');
+  execFileSync(process.execPath, [playwrightCli, 'install', 'chromium'], {
     stdio: 'inherit',
     cwd: serverPath,
     env,
